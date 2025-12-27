@@ -25,9 +25,11 @@ namespace CaritorCodeFoundry
         {
             InitializeComponent();
         }
-
         private void MainForm_Load(object sender, EventArgs e)
         {
+            if (DesignMode)
+                return;
+
             lblStatus.Text = "Status: Ready";
             txtPreview.Clear();
 
@@ -35,9 +37,21 @@ namespace CaritorCodeFoundry
             if (cs != null)
                 txtConnection.Text = cs.ConnectionString;
 
-            // Wire PascalName change → SelectionDto
             txtPascalName.TextChanged += TxtPascalName_TextChanged;
         }
+
+        //private void MainForm_Load(object sender, EventArgs e)
+        //{
+        //    lblStatus.Text = "Status: Ready";
+        //    txtPreview.Clear();
+
+        //    var cs = ConfigurationManager.ConnectionStrings["CodeFoundryDb"];
+        //    if (cs != null)
+        //        txtConnection.Text = cs.ConnectionString;
+
+        //    // Wire PascalName change → SelectionDto
+        //    txtPascalName.TextChanged += TxtPascalName_TextChanged;
+        //}
 
         // ---------------- CONNECT ----------------
 

@@ -244,16 +244,23 @@ namespace CodeFoundry.Generator.UI
         // =====================================================
         private void Dgv_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
+
             var row = dgv.Rows[e.RowIndex];
+
             if (dgv.Columns[e.ColumnIndex].Name == "Order")
             {
                 int order = IntVal(row, "Order");
+
                 if (order == 0)
                     row.Cells["GroupNo"].Value = 0;
-            }
 
-            SortGrid();
+                // ❌ REMOVE SortGrid() FROM HERE
+            }
         }
+
+
 
         // =====================================================
         // SORTING

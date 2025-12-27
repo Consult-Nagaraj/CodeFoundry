@@ -62,12 +62,13 @@
 
             this.txtPascalName.SetBounds(12, 52, 380, 26);
 
-            this.lstTables.SetBounds(12, 92, 380, 300);
-            this.lstTables.Anchor = (
-                System.Windows.Forms.AnchorStyles.Top |
-                System.Windows.Forms.AnchorStyles.Bottom |
-                System.Windows.Forms.AnchorStyles.Left |
-                System.Windows.Forms.AnchorStyles.Right);
+            // 🔧 FIX: reduced height to avoid overlap with Actions panel
+            this.lstTables.SetBounds(12, 92, 380,140);
+            //this.lstTables.Anchor = (
+            //    System.Windows.Forms.AnchorStyles.Top |
+            //    System.Windows.Forms.AnchorStyles.Bottom |
+            //    System.Windows.Forms.AnchorStyles.Left |
+            //    System.Windows.Forms.AnchorStyles.Right);
             this.lstTables.SelectedIndexChanged +=
                 new System.EventHandler(this.lstTables_SelectedIndexChanged);
 

@@ -12,7 +12,7 @@ namespace CodeFoundry.Generator.UI
 
         private ListBox lstFields;
 
-        // ---------- UI ----------
+        // ================= UI =================
         private CheckBox chkUiRequired;
         private TextBox txtUiRequiredMsg;
 
@@ -24,7 +24,11 @@ namespace CodeFoundry.Generator.UI
         private NumericUpDown numUiMaxLen;
         private TextBox txtUiMaxLenMsg;
 
-        // ---------- DB ----------
+        private CheckBox chkUiPattern;
+        private ComboBox cmbUiPattern;
+        private TextBox txtUiPatternMsg;
+
+        // ================= DB =================
         private CheckBox chkDbRequired;
         private TextBox txtDbRequiredMsg;
 
@@ -35,6 +39,14 @@ namespace CodeFoundry.Generator.UI
         private CheckBox chkDbMaxLen;
         private NumericUpDown numDbMaxLen;
         private TextBox txtDbMaxLenMsg;
+
+        private CheckBox chkDbMinValue;
+        private NumericUpDown numDbMinValue;
+        private TextBox txtDbMinValueMsg;
+
+        private CheckBox chkDbMaxValue;
+        private NumericUpDown numDbMaxValue;
+        private TextBox txtDbMaxValueMsg;
 
         private CheckBox chkDbUnique;
         private TextBox txtDbUniqueCols;
@@ -56,7 +68,7 @@ namespace CodeFoundry.Generator.UI
         {
             Text = "Configure Validations (Normal)";
             StartPosition = FormStartPosition.CenterParent;
-            Size = new Size(1150, 520);
+            Size = new Size(1250, 540);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
 
@@ -65,77 +77,105 @@ namespace CodeFoundry.Generator.UI
                 Left = 10,
                 Top = 10,
                 Width = 220,
-                Height = 440
+                Height = 460
             };
             lstFields.SelectedIndexChanged += (_, __) => LoadFieldValidation();
 
-            // ---------- UI group ----------
+            // ================= UI GROUP =================
             var grpUi = new GroupBox
             {
                 Text = "UI Validation",
                 Left = 240,
                 Top = 10,
-                Width = 420,
-                Height = 440
+                Width = 480,
+                Height = 460
             };
 
             int y = 30;
 
-            chkUiRequired = new CheckBox { Text = "Required", Left = 10, Top = y };
-            txtUiRequiredMsg = new TextBox { Left = 160, Top = y, Width = 240 };
-            y += 35;
+            chkUiRequired = NewCheck("Required", y);
+            txtUiRequiredMsg = NewText(160, y);
+            y += 32;
 
-            chkUiMinLen = new CheckBox { Text = "Min Length", Left = 10, Top = y };
-            numUiMinLen = new NumericUpDown { Left = 160, Top = y, Width = 60, Minimum = 1, Maximum = 9999 };
-            txtUiMinLenMsg = new TextBox { Left = 230, Top = y, Width = 170 };
-            y += 35;
+            chkUiMinLen = NewCheck("Min Length", y);
+            numUiMinLen = NewNum(160, y, 1);
+            txtUiMinLenMsg = NewText(230, y);
+            y += 32;
 
-            chkUiMaxLen = new CheckBox { Text = "Max Length", Left = 10, Top = y };
-            numUiMaxLen = new NumericUpDown { Left = 160, Top = y, Width = 60, Minimum = 0, Maximum = 9999 };
-            txtUiMaxLenMsg = new TextBox { Left = 230, Top = y, Width = 170 };
+            chkUiMaxLen = NewCheck("Max Length", y);
+            numUiMaxLen = NewNum(160, y, 0);
+            txtUiMaxLenMsg = NewText(230, y);
+            y += 32;
+
+            chkUiPattern = NewCheck("Pattern Type", y);
+            cmbUiPattern = new ComboBox
+            {
+                Left = 160,
+                Top = y,
+                Width = 120,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cmbUiPattern.Items.AddRange(new object[]
+            {
+                "Email", "Mobile", "PAN", "Aadhaar", "IFSC"
+            });
+            txtUiPatternMsg = NewText(290, y);
 
             grpUi.Controls.AddRange(new Control[]
             {
                 chkUiRequired, txtUiRequiredMsg,
                 chkUiMinLen, numUiMinLen, txtUiMinLenMsg,
-                chkUiMaxLen, numUiMaxLen, txtUiMaxLenMsg
+                chkUiMaxLen, numUiMaxLen, txtUiMaxLenMsg,
+                chkUiPattern, cmbUiPattern, txtUiPatternMsg
             });
 
-            // ---------- DB group ----------
+            // ================= DB GROUP =================
             var grpDb = new GroupBox
             {
                 Text = "DB Validation",
-                Left = 680,
+                Left = 740,
                 Top = 10,
-                Width = 420,
-                Height = 440
+                Width = 480,
+                Height = 460
             };
 
             y = 30;
 
-            chkDbRequired = new CheckBox { Text = "Required", Left = 10, Top = y };
-            txtDbRequiredMsg = new TextBox { Left = 160, Top = y, Width = 240 };
-            y += 35;
+            chkDbRequired = NewCheck("Required", y);
+            txtDbRequiredMsg = NewText(160, y);
+            y += 32;
 
-            chkDbMinLen = new CheckBox { Text = "Min Length", Left = 10, Top = y };
-            numDbMinLen = new NumericUpDown { Left = 160, Top = y, Width = 60, Minimum = 1, Maximum = 9999 };
-            txtDbMinLenMsg = new TextBox { Left = 230, Top = y, Width = 170 };
-            y += 35;
+            chkDbMinLen = NewCheck("Min Length", y);
+            numDbMinLen = NewNum(160, y, 1);
+            txtDbMinLenMsg = NewText(230, y);
+            y += 32;
 
-            chkDbMaxLen = new CheckBox { Text = "Max Length", Left = 10, Top = y };
-            numDbMaxLen = new NumericUpDown { Left = 160, Top = y, Width = 60, Minimum = 0, Maximum = 9999 };
-            txtDbMaxLenMsg = new TextBox { Left = 230, Top = y, Width = 170 };
-            y += 35;
+            chkDbMaxLen = NewCheck("Max Length", y);
+            numDbMaxLen = NewNum(160, y, 0);
+            txtDbMaxLenMsg = NewText(230, y);
+            y += 32;
 
-            chkDbUnique = new CheckBox { Text = "Unique (Duplicate Check)", Left = 10, Top = y };
+            chkDbMinValue = NewCheck("Min Value", y);
+            numDbMinValue = NewNum(160, y, 0);
+            txtDbMinValueMsg = NewText(230, y);
+            y += 32;
+
+            chkDbMaxValue = NewCheck("Max Value", y);
+            numDbMaxValue = NewNum(160, y, 0);
+            txtDbMaxValueMsg = NewText(230, y);
+            y += 32;
+
+            chkDbUnique = NewCheck("Unique (Duplicate)", y);
             txtDbUniqueCols = new TextBox { Left = 160, Top = y, Width = 120 };
-            txtDbUniqueMsg = new TextBox { Left = 290, Top = y, Width = 110 };
+            txtDbUniqueMsg = new TextBox { Left = 290, Top = y, Width = 160 };
 
             grpDb.Controls.AddRange(new Control[]
             {
                 chkDbRequired, txtDbRequiredMsg,
                 chkDbMinLen, numDbMinLen, txtDbMinLenMsg,
                 chkDbMaxLen, numDbMaxLen, txtDbMaxLenMsg,
+                chkDbMinValue, numDbMinValue, txtDbMinValueMsg,
+                chkDbMaxValue, numDbMaxValue, txtDbMaxValueMsg,
                 chkDbUnique, txtDbUniqueCols, txtDbUniqueMsg
             });
 
@@ -143,8 +183,8 @@ namespace CodeFoundry.Generator.UI
             {
                 Text = "Close",
                 Width = 120,
-                Left = 980,
-                Top = 460
+                Left = 1080,
+                Top = 480
             };
             btnClose.Click += (_, __) => Close();
 
@@ -156,21 +196,29 @@ namespace CodeFoundry.Generator.UI
             WireSaveHandlers();
         }
 
+        // =====================================================
+        // HELPERS
+        // =====================================================
+        private CheckBox NewCheck(string text, int y) =>
+            new CheckBox { Text = text, Left = 10, Top = y };
+
+        private TextBox NewText(int x, int y) =>
+            new TextBox { Left = x, Top = y, Width = 200 };
+
+        private NumericUpDown NewNum(int x, int y, int min) =>
+            new NumericUpDown { Left = x, Top = y, Width = 60, Minimum = min, Maximum = 999999 };
+
         private void WireSaveHandlers()
         {
-            foreach (var chk in Controls.OfType<GroupBox>()
-                     .SelectMany(g => g.Controls.OfType<CheckBox>()))
-                chk.CheckedChanged += (_, __) => SaveCurrent();
-
-            foreach (var num in Controls.OfType<GroupBox>()
-                     .SelectMany(g => g.Controls.OfType<NumericUpDown>()))
-                num.ValueChanged += (_, __) => SaveCurrent();
-
-            foreach (var txt in Controls.OfType<GroupBox>()
-                     .SelectMany(g => g.Controls.OfType<TextBox>()))
-                txt.TextChanged += (_, __) => SaveCurrent();
+            foreach (var c in Controls.OfType<GroupBox>()
+                .SelectMany(g => g.Controls.Cast<Control>()))
+            {
+                if (c is CheckBox cb) cb.CheckedChanged += (_, __) => SaveCurrent();
+                if (c is TextBox tb) tb.TextChanged += (_, __) => SaveCurrent();
+                if (c is NumericUpDown n) n.ValueChanged += (_, __) => SaveCurrent();
+                if (c is ComboBox b) b.SelectedIndexChanged += (_, __) => SaveCurrent();
+            }
         }
-
 
         // =====================================================
         // DATA
@@ -178,7 +226,6 @@ namespace CodeFoundry.Generator.UI
         private void LoadFields()
         {
             lstFields.Items.Clear();
-
             foreach (var f in _selection.Validation.Fields.Keys.OrderBy(x => x))
                 lstFields.Items.Add(f);
 
@@ -206,6 +253,10 @@ namespace CodeFoundry.Generator.UI
             numUiMaxLen.Value = fv.Ui.MaxLength?.Value ?? 0;
             txtUiMaxLenMsg.Text = fv.Ui.MaxLength?.Message ?? "";
 
+            chkUiPattern.Checked = fv.Ui.PatternType != null;
+            cmbUiPattern.SelectedItem = fv.Ui.PatternType;
+            txtUiPatternMsg.Text = fv.Ui.PatternMessage ?? "";
+
             chkDbRequired.Checked = fv.Db.Required?.Enabled == true;
             txtDbRequiredMsg.Text = fv.Db.Required?.Message ?? "";
 
@@ -225,41 +276,22 @@ namespace CodeFoundry.Generator.UI
         private void SaveCurrent()
         {
             if (lstFields.SelectedItem == null) return;
-
             var field = lstFields.SelectedItem.ToString();
             var fv = GetOrCreate(field);
 
-            fv.Ui.Required = chkUiRequired.Checked
-                ? new RequiredRule { Enabled = true, Message = txtUiRequiredMsg.Text }
-                : null;
+            fv.Ui.Required = chkUiRequired.Checked ? new RequiredRule { Enabled = true, Message = txtUiRequiredMsg.Text } : null;
+            fv.Ui.MinLength = chkUiMinLen.Checked ? new LengthRule { Enabled = true, Value = (int)numUiMinLen.Value, Message = txtUiMinLenMsg.Text } : null;
+            fv.Ui.MaxLength = chkUiMaxLen.Checked ? new LengthRule { Enabled = true, Value = (int)numUiMaxLen.Value, Message = txtUiMaxLenMsg.Text } : null;
 
-            fv.Ui.MinLength = chkUiMinLen.Checked
-                ? new LengthRule { Enabled = true, Value = (int)numUiMinLen.Value, Message = txtUiMinLenMsg.Text }
-                : null;
+            fv.Ui.PatternType = chkUiPattern.Checked ? cmbUiPattern.Text : null;
+            fv.Ui.PatternMessage = chkUiPattern.Checked ? txtUiPatternMsg.Text : null;
 
-            fv.Ui.MaxLength = chkUiMaxLen.Checked
-                ? new LengthRule { Enabled = true, Value = (int)numUiMaxLen.Value, Message = txtUiMaxLenMsg.Text }
-                : null;
-
-            fv.Db.Required = chkDbRequired.Checked
-                ? new RequiredRule { Enabled = true, Message = txtDbRequiredMsg.Text }
-                : null;
-
-            fv.Db.MinLength = chkDbMinLen.Checked
-                ? new LengthRule { Enabled = true, Value = (int)numDbMinLen.Value, Message = txtDbMinLenMsg.Text }
-                : null;
-
-            fv.Db.MaxLength = chkDbMaxLen.Checked
-                ? new LengthRule { Enabled = true, Value = (int)numDbMaxLen.Value, Message = txtDbMaxLenMsg.Text }
-                : null;
+            fv.Db.Required = chkDbRequired.Checked ? new RequiredRule { Enabled = true, Message = txtDbRequiredMsg.Text } : null;
+            fv.Db.MinLength = chkDbMinLen.Checked ? new LengthRule { Enabled = true, Value = (int)numDbMinLen.Value, Message = txtDbMinLenMsg.Text } : null;
+            fv.Db.MaxLength = chkDbMaxLen.Checked ? new LengthRule { Enabled = true, Value = (int)numDbMaxLen.Value, Message = txtDbMaxLenMsg.Text } : null;
 
             fv.Db.Unique = chkDbUnique.Checked
-                ? new UniqueRule
-                {
-                    Enabled = true,
-                    ColumnsCsv = txtDbUniqueCols.Text,
-                    Message = txtDbUniqueMsg.Text
-                }
+                ? new UniqueRule { Enabled = true, ColumnsCsv = txtDbUniqueCols.Text, Message = txtDbUniqueMsg.Text }
                 : null;
         }
 
@@ -268,10 +300,7 @@ namespace CodeFoundry.Generator.UI
             if (fv.Ui.Required != null) return;
 
             fv.Ui.Required = new RequiredRule { Enabled = false, Message = $"{field} is required" };
-            fv.Db.Required = new RequiredRule { Enabled = false, Message = $"{field} is required" };
-
             fv.Ui.MinLength = new LengthRule { Enabled = false, Value = 1, Message = $"{field} must have at least 1 character" };
-            fv.Db.MinLength = new LengthRule { Enabled = false, Value = 1, Message = $"{field} must have at least 1 character" };
         }
 
         private FieldValidation GetOrCreate(string field)

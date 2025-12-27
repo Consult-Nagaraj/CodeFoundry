@@ -225,7 +225,12 @@ namespace CodeFoundry.Generator.Models
         public LengthRule MinLength { get; set; }
         public LengthRule MaxLength { get; set; }
         public AllowedValuesRule AllowedValues { get; set; }
+
+        // 🔴 ADD ONLY THESE TWO LINES
+        public string PatternType { get; set; }      // Email / Mobile / PAN / etc
+        public string PatternMessage { get; set; }   // Error message
     }
+
 
     // -------- DB VALIDATION --------
     public class DbValidation
