@@ -3,8 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using CaritorCodeFoundry.UI;
+using CodeFoundry.Core.Builders;
+using CodeFoundry.Core.Enums;
+using CodeFoundry.Core.Models;
 using CodeFoundry.Generator.Models;
 using CodeFoundry.Generator.Tools;
 
@@ -31,6 +35,7 @@ namespace CodeFoundry.Generator.UI
 
         private readonly string[] GridTypes = { "EditGrid", "InfoGrid", "DropDownGrid", "Normal" };
         private readonly string[] ControlTypes = { "TextBox", "Number", "Date", "DropDown", "Label" };
+        
 
         public ConfigureFieldsFormAdvanced()
         {
@@ -140,14 +145,267 @@ namespace CodeFoundry.Generator.UI
                 btnSort, btnValidation, dgv, btnApply, btnCancel
             });
         }
+        private ConfigureFieldsState CaptureConfigureFieldsState()
+        {
+            return new ConfigureFieldsState
+            {
+                TableName = _schema.TableName,   // or however you store it
+                ViewName = _schema.TableName + "Vw",
+                GridType = (GridType)Enum.Parse(
+    typeof(GridType),
+    cmbGridType.SelectedItem.ToString()),     // from UI
+                Fields = GetSelectedFieldStates()     // from grid
+            };
+        }
+        private IList<FieldConfigState> GetSelectedFieldStates()
+        {
+            var list = new List<FieldConfigState>();
+
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.IsNewRow)
+                    continue;
+
+                // Only selected fields participate
+                if (!Bool(row, "Use"))
+                    continue;
+
+                string fieldName = row.Cells["FieldName"].Value?.ToString();
+                if (string.IsNullOrWhiteSpace(fieldName))
+                    continue;
+
+                // Skip FK child rows (DeptId.Name etc.)
+                if (fieldName.Contains("."))
+                    continue;
+
+                var field = new FieldConfigState
+                {
+                    FieldName = fieldName,
+                    DisplayName = row.Cells["DisplayName"].Value?.ToString(),
+                    IsVisible = !Bool(row, "Hidden"),
+                    DisplayOrder = IntVal(row, "Order"),
+
+                    // FK detection based on ControlType
+                    ForeignKey =
+                        string.Equals(
+                            row.Cells["ControlType"].Value?.ToString(),
+                            "DropDown",
+                            StringComparison.OrdinalIgnoreCase)
+                        ? BuildForeignKeyConfig(row)
+                        : null
+                };
+
+                list.Add(field);
+            }
+
+            return list;
+        }
+
+        private ForeignKeyConfigState BuildForeignKeyConfig(DataGridViewRow parentRow)
+        {
+            string parentField = parentRow.Cells["FieldName"].Value.ToString();
+
+            var fk = _schema.ForeignKeys
+                .FirstOrDefault(x =>
+                    string.Equals(x.ColumnName, parentField, StringComparison.OrdinalIgnoreCase));
+
+            if (fk == null)
+                return null;
+
+            var displayCols = new List<FkDisplayColumn>();
+
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.IsNewRow)
+                    continue;
+
+                string fieldName = row.Cells["FieldName"].Value?.ToString();
+
+                if (fieldName == null)
+                    continue;
+
+                // 🔥 FK CHILD ROW
+                if (fieldName.StartsWith(parentField + ".", StringComparison.OrdinalIgnoreCase))
+                {
+                    string col = fieldName.Substring(parentField.Length + 1);
+
+                    displayCols.Add(new FkDisplayColumn
+                    {
+                        ColumnName = col,
+                        Alias =
+                            NamingHelper.ToPascalCase(fk.ReferencedTable) +
+                            NamingHelper.ToPascalCase(col)
+                    });
+                }
+            }
+
+            return new ForeignKeyConfigState
+            {
+                ReferenceTable = fk.ReferencedTable,
+                ReferenceKey = fk.ReferencedColumn,
+                ReferenceTableAlias = fk.ReferencedTable.Substring(0, 1).ToLower(),
+                DisplayColumns = displayCols
+            };
+        }
+
+        private string BuildInfoGridViewFromGrid()
+        {
+            var sb = new StringBuilder();
+
+            string tableName = _schema.TableName;
+            string viewName = NamingHelper.ToPascalCase( tableName + "Vw");
+
+            sb.AppendLine("CREATE OR REPLACE VIEW " + viewName);
+            sb.AppendLine("AS");
+            sb.AppendLine("SELECT");
+
+            // ------------------------------------
+            // SELECT COLUMNS (GRID DRIVEN)
+            // ------------------------------------
+            var rows = dgv.Rows
+                .Cast<DataGridViewRow>()
+                .Where(r => !r.IsNewRow)
+                .Where(r => Bool(r, "Use"))
+                .OrderBy(r => IntVal(r, "Order"))
+                .ToList();
+
+            bool first = true;
+
+            foreach (var row in rows)
+            {
+                string field = row.Cells["FieldName"].Value.ToString();
+
+                if (!first)
+                    sb.AppendLine(",");
+
+                // --------------------------------
+                // BASE / FK ID COLUMN
+                // --------------------------------
+                if (!field.Contains("."))
+                {
+                    sb.Append("    IFNULL(ed.")
+                      .Append(field)
+                      .Append(", e.")
+                      .Append(field)
+                      .Append(") AS ")
+                      .Append(field);
+                }
+                // --------------------------------
+                // FK CHILD COLUMN
+                // --------------------------------
+                else
+                {
+                    // DivisionId.Code → DivisionId + Code
+                    var parts = field.Split('.');
+                    string parentField = parts[0];
+                    string childField = parts[1];
+
+                    var fk = _schema.ForeignKeys.First(x =>
+                        string.Equals(x.ColumnName, parentField, StringComparison.OrdinalIgnoreCase));
+
+                    string alias = fk.ReferencedTable.Substring(0, 1).ToLower();
+
+                    sb.Append("    ")
+                      .Append(alias)
+                      .Append(".")
+                      .Append(childField)
+                      .Append(" AS ")
+                      .Append(
+                          NamingHelper.ToPascalCase(fk.ReferencedTable) +
+                          NamingHelper.ToPascalCase(childField));
+                }
+
+                first = false;
+            }
+
+            sb.AppendLine();
+
+            // ------------------------------------
+            // FROM + APPROVAL OVERLAY
+            // ------------------------------------
+            sb.AppendLine("FROM " + tableName + " e");
+            sb.AppendLine("LEFT JOIN " + tableName + " ed");
+            sb.AppendLine("  ON e.Id = ed.Id");
+            sb.AppendLine(" AND ed.Status IN ('E','D')");
+            sb.AppendLine(" AND ed.ApprStatus = 'P'");
+
+            // ------------------------------------
+            // FK JOINS (ONCE PER FK)
+            // ------------------------------------
+            var fkParents = rows
+                .Select(r => r.Cells["FieldName"].Value.ToString())
+                .Where(f => !f.Contains("."))
+                .Where(f => _schema.ForeignKeys.Any(x =>
+                    string.Equals(x.ColumnName, f, StringComparison.OrdinalIgnoreCase)))
+                .Distinct()
+                .ToList();
+
+            foreach (var parentField in fkParents)
+            {
+                var fk = _schema.ForeignKeys.First(x =>
+                    string.Equals(x.ColumnName, parentField, StringComparison.OrdinalIgnoreCase));
+
+                string alias = fk.ReferencedTable.Substring(0, 1).ToLower();
+
+                sb.Append("LEFT JOIN ")
+                  .Append(fk.ReferencedTable)
+                  .Append(" ")
+                  .Append(alias)
+                  .Append(" ON ")
+                  .Append(alias)
+                  .Append(".")
+                  .Append(fk.ReferencedColumn)
+                  .Append(" = IFNULL(ed.")
+                  .Append(parentField)
+                  .Append(", e.")
+                  .Append(parentField)
+                  .Append(")");
+
+                sb.AppendLine();
+            }
+
+            // ------------------------------------
+            // WHERE
+            // ------------------------------------
+            sb.AppendLine("WHERE");
+            sb.AppendLine("    e.Status = 'A'");
+            sb.AppendLine("AND e.ApprStatus = 'A';");
+
+            return sb.ToString();
+        }
+
         private void BtnPreview_Click(object sender, EventArgs e)
         {
-            // STEP-2 will go here
+            // STEP 1: Capture current UI state
+            ConfigureFieldsState config = CaptureConfigureFieldsState();
+
+            if (config == null || config.Fields == null || config.Fields.Count == 0)
+            {
+                MessageBox.Show(
+                    "Please select at least one field before preview.",
+                    "Preview",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            // STEP 2: Build View SQL using CORE builder
+            //string viewSql = ViewSqlBuilderCore.Build(_schema, config);
+            string viewSql = BuildInfoGridViewFromGrid();
+
+
+            // STEP 3: Show Preview dialog
             using (var dlg = new PreviewDialog())
             {
+                dlg.SetViewSql(viewSql);
+
+                // ViewModel will be wired later
+                dlg.SetViewModel("-- ViewModel preview will be added next");
+
                 dlg.ShowDialog(this);
             }
         }
+
 
         private void SeedColumnDataTypes()
         {

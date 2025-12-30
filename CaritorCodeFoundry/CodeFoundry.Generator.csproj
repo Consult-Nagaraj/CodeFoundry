@@ -89,6 +89,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Builder\ViewSqlBuilderCore.cs" />
+    <Compile Include="Core\ConfigureFieldsState.cs" />
+    <Compile Include="Core\GridType.cs" />
     <Compile Include="Generators\DbViewGenerator.cs" />
     <Compile Include="Generators\DtoGenerator.cs" />
     <Compile Include="Generators\EditGridMetaGenerator.cs" />
@@ -114,10 +117,13 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\ColumnSchema.cs" />
+    <Compile Include="Model\FieldConfigState.cs" />
+    <Compile Include="Model\ForeignKeyConfigState.cs" />
     <Compile Include="Model\ForeignKeySchema.cs" />
     <Compile Include="Model\MetaData\EditGridMeta.cs" />
     <Compile Include="Model\SelectionDto.cs" />
     <Compile Include="Model\TableSchemeDTO.cs" />
+    <Compile Include="Model\ViewSqlBuildRequest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\ProjectManager.cs" />
